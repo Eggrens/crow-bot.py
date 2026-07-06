@@ -1,0 +1,5 @@
+.venv
+*.log
+*.out
+crow/__pycache__
+config.yml

@@ -1,0 +1,20 @@
+---
+# your discord bot's token
+token: 'your-bot-token'
+# the prefix to use for crow's commands (e.g. ~ -> ~play)
+prefix: '~'
+# the "owners" of crow, i.e. who can play music and stop the bot
+owners:
+  - 123456
+# the channels crow is allowed to listen to for commands
+channels:
+  - 7890
+# albums: a list of folders with music files. each must have a name and the absolute path to the folder
+albums:
+  - name: 'my-album'
+    path: '/path/to/your/album'
+# collections: a list of folders which contain folders with music files 
+# every folder inside a collection is treated as an "album" and added to the list of albums
+# useful if you have a big folder of albums that you don't want to list and name individually
+collections:
+  - '/path/to/a/buncha/folders'
