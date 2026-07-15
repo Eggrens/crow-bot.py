@@ -13,6 +13,7 @@ class CrowBot(commands.Bot):
 
         self.owner_ids = set(config['owners'])
         self.channels = set(config['channels'])
+        self.status_channel = config['status_channel']
         self.albums = config['albums']
         self.token = config['token']
 

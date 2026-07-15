@@ -6,6 +6,12 @@ from .song import Song
 def max_length(strings):
     return max(len(x) for x in strings)
 
+def sortable_by_track(songs):
+    for song in songs:
+        if not song.has_track_number():
+            return False
+    return True
+
 async def add_to_msg_list(msg, msg_list, ctx):
     if len(msg) + len(msg_list) > 1997:
         msg_list += "```"
@@ -14,6 +20,27 @@ async def add_to_msg_list(msg, msg_list, ctx):
     else:
         msg_list += msg
     return msg_list
+
+def get_album(album_title, albums):
+    for album in albums:
+        if album['name'] == album_title:
+            return album
+    return None
+
+def get_songs_from_album(album_path):
+    songs = []
+    for path, dirs, files in os.walk(album_path):
+        for filename in files:
+            name, ext = os.path.splitext(filename)
+            if ext in ['.mp3', '.flac', '.wav']:
+                song = Song(os.path.join(path, filename))
+                songs.append(song)
+
+    if sortable_by_track(songs):
+        songs.sort(key=lambda s: s.track)
+    else:
+        songs.sort(key=lambda s: s.filename)
+    return songs
 
 async def list_ls_format(list_title, items, ctx):
     msg_list = f"```\n{list_title}:\n\n"

@@ -10,6 +10,7 @@ class Song:
         self.title = tag.title
         self.artist = tag.artist
         self.album = tag.album
+        self.track = tag.track
         self.duration = int(tag.duration)
         self.image = tag.images.any
 
@@ -28,4 +29,7 @@ class Song:
             return f"{minutes}:{seconds:02d}"
         else:
             return f"{hours}:{minutes:02d}:{seconds:02d}"
+    
+    def has_track_number(self):
+        return (self.track is not None)
 

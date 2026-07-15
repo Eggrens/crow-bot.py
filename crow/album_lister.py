@@ -1,7 +1,6 @@
 import discord
-import os
 from .song import Song
-from .listing import list_ls_format, list_songs_format
+from .listing import list_ls_format, list_songs_format, get_songs_from_album, get_album
 from discord.ext import commands
 
 class AlbumLister(commands.Cog):
@@ -19,24 +18,13 @@ class AlbumLister(commands.Cog):
     async def list(self, ctx, album_title, arg=None):
         numbered = (arg == '-n')
         numbered_with_titles = (arg == '-t')
-        album = None
-        for a in self.bot.albums:
-            if a['name'] == album_title:
-                album = a
-                break
+        album = get_album(album_title, self.bot.albums)
 
         if not album:
             await ctx.send(f"album {album_title} not found!")
             return
 
-        songs = []
-        for path, dirs, files in os.walk(album['path']):
-            for filename in files:
-                name, ext = os.path.splitext(filename)
-                if ext in ['.mp3', '.flac', '.wav']:
-                    song = Song(os.path.join(path, filename))
-                    songs.append(song)
-        songs.sort(key=lambda s: s.filename)
+        songs = get_songs_from_album(album['path'])
 
         if songs:
             title = f"songs in {album_title}"
