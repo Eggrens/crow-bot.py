@@ -37,7 +37,7 @@ def get_songs_from_album(album_path):
                 songs.append(song)
 
     if sortable_by_track(songs):
-        songs.sort(key=lambda s: s.track)
+        songs.sort(key=lambda s: (s.disc, s.track))
     else:
         songs.sort(key=lambda s: s.filename)
     return songs
