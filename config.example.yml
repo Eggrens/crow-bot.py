@@ -18,3 +18,5 @@ albums:
 # useful if you have a big folder of albums that you don't want to list and name individually
 collections:
   - '/path/to/a/buncha/folders'
+# a log file to write output to. set as empty string if you don't want one
+log: 'crow-bot.log'

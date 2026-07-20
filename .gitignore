@@ -3,3 +3,4 @@
 *.out
 crow/__pycache__
 config.yml
+*.swp
