@@ -4,99 +4,18 @@ import io
 import random
 from .listing import list_songs_format, get_songs_from_album, get_album
 from .song import Song
+from .crow_client import CrowClient
 from discord.ext import commands
 
-class SongSource(discord.FFmpegOpusAudio):
-    def __init__(self, source):
-        self.played = 0     # in ms
-        super().__init__(source)
-
-    def read(self):
-        self.played += 20
-        return super().read()
-
-    def elapsed_time(self):
-        # return elapsed time as seconds
-        return self.played // 1000
-
-class CrowClient(discord.VoiceClient):
-    def __init__(self, *args, **kwargs):
-        self.queue = []
-        self.bot = None
-        self.current_song = None
-        self.current_source = None
-        super().__init__(*args, **kwargs)
-
-    def track_done(self, error):
-        if self.queue:
-            # play next song in queue
-            next_song = self.queue.pop(0)
-            next_source = SongSource(next_song.path)
-            self.current_song = next_song
-            self.current_source = next_source
-            self.play(next_source, after=self.track_done)
-            self.bot.dispatch("crow_song", str(next_song))
-        else:
-            self.current_song = None
-            self.current_source = None
-            self.bot.dispatch("crow_done", self)
-
-    def add_to_queue(self, song: Song, bot):
-        if not self.bot:
-            self.bot = bot
-
-        # add song to the queue if it has songs, else start playing it immediately
-        if self.queue or self.is_playing():
-            self.queue.append(song)
-        else:
-            self.current_song = song
-            source = SongSource(song.path)
-            self.current_source = source
-            self.play(source, after=self.track_done)
-            self.bot.dispatch("crow_song", str(song))
-
-    def skip_song(self, index=0):
-        # skip current song and play the one at the index specified, removing any songs before it
-        if self.is_playing():
-            if index > 0:
-                # remove songs from queue up to the index
-                self.queue = self.queue[index:]
-
-            self.stop()
-
-    def playtime(self):
-        # return current elapsed time of song (xx:xx/yy:yy)
-        song_time = self.current_song.formatted_time()
-        current_elapsed = self.current_source.elapsed_time()
-
-        elapsed_hours = current_elapsed // 3600
-        elapsed_minutes = (current_elapsed // 60) % 60
-        elapsed_seconds = current_elapsed % 60
-
-        if elapsed_hours < 1:
-            current_time = f"{elapsed_minutes}:{elapsed_seconds:02d}"
-        else:
-            current_time = f"{elapsed_hours}:{elapsed_minutes:02d}:{elapsed_seconds:02d}"
-
-        return f"{current_time} / {song_time}"
-
-    def clear_queue(self):
-        self.queue = []
-
-    def shuffle_queue(self):
-        random.shuffle(self.queue)
-
-
-class Player(commands.Cog):
+class Player(commands.Cog, name='Player'):
     def __init__(self, bot):
         self.bot = bot
     
     @commands.command(
-        help="shows what's currently playing",
+        help="shows what song is currently playing",
         aliases=['np']
     )
     async def nowplaying(self, ctx):
-        # TODO: replace with an embed
         if not ctx.voice_client or not ctx.voice_client.is_playing():
             await ctx.send("i'm not playing anything!!")
             return
@@ -128,7 +47,7 @@ class Player(commands.Cog):
         await ctx.send(file=song_cover, embed=embed)
 
     @commands.command(
-        help="shows what's in the queue",
+        help="shows a list of the songs currently in the queue",
         aliases=['q']
     )
     async def queue(self, ctx):
@@ -142,18 +61,11 @@ class Player(commands.Cog):
             await list_songs_format("queue", ctx.voice_client.queue, False, ctx) 
 
     @commands.command(
-        help="adds a song file (given a filepath) to the queue, or resumes playback",
-        aliases=['p']
+        help="add a song to the queue (search by filepath)",
+        aliases=['p'],
+        usage='<filepath>'
     )
-    async def play(self, ctx, file=None):
-        if not file:
-            if ctx.voice_client.is_paused():
-                ctx.voice_client.resume()
-                await ctx.send("caw! resumed playback")
-            else:
-                await ctx.send("i'm already playing...")
-            return
-
+    async def play(self, ctx, file):
         if not os.path.isfile(file):
             await ctx.send(f"**{file}** was not found, or is not a file")
             return
@@ -163,8 +75,9 @@ class Player(commands.Cog):
         await ctx.send(f"caw! added **{song}** (`{song.formatted_time()}`) to the queue")
 
     @commands.command(
-        help="adds all songs in the album to the queue. add '-s' to the end to shuffle before inserting.",
-        aliases=['pa']
+        help="adds all songs in the album to the queue. add '-s' to shuffle before inserting.",
+        aliases=['pa'],
+        usage="<album name> [-s]"
     )
     async def playalbum(self, ctx, album, shuffle=None):
         album_to_play = get_album(album, self.bot.albums)
@@ -188,8 +101,9 @@ class Player(commands.Cog):
         await ctx.send(f"caw! added **{len(songs)}** songs from **{album}** to the queue") 
 
     @commands.command(
-        help="adds a song from an album with the given track number/index to the queue.",
-        aliases=['pt']
+        help="adds a song from an album with the given track number/index to the queue. use `~list <album name> -n` to get the index numbers of songs in the album",
+        aliases=['pt'],
+        usage="<album name> <index>"
     )
     async def playtrack(self, ctx, album, index: int):
         album_to_search = get_album(album, self.bot.albums)
@@ -210,6 +124,16 @@ class Player(commands.Cog):
 
         ctx.voice_client.add_to_queue(songs[index-1], self.bot)
         await ctx.send(f"caw! added **{songs[index-1]}** from **{album}** to the queue.")
+
+    @commands.command(
+        help="resumes playback"
+    )
+    async def resume(self, ctx):
+        if ctx.voice_client.is_paused():
+            ctx.voice_client.resume()
+            await ctx.send("caw! resumed playback")
+        else:
+            await ctx.send("i'm already playing...")
 
     @commands.command(
         help="pauses playback"
@@ -248,7 +172,8 @@ class Player(commands.Cog):
         await ctx.send("caw! shuffling queue")
 
     @commands.command(
-        help="skips to the next track in the queue. add an index number to skip to a specific song in the queue"
+        help="skips to the next track in the queue. add an index number to skip to a specific song in the queue",
+        usage="[index]"
     )
     async def skip(self, ctx, index: int = 1):
         if not ctx.voice_client or not ctx.voice_client.is_playing():

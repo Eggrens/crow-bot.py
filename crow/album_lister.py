@@ -3,17 +3,20 @@ from .song import Song
 from .listing import list_ls_format, list_songs_format, get_songs_from_album, get_album
 from discord.ext import commands
 
-class AlbumLister(commands.Cog):
+class AlbumLister(commands.Cog, name='Album-related'):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(help='list all albums')
+    @commands.command(
+            help='list all available albums defined in the config'
+    )
     async def albums(self, ctx):
         album_list = [ a['name'] for a in self.bot.albums ]
         await list_ls_format("albums", album_list, ctx)
 
     @commands.command(
-        help='list all songs in a given album. add "-n" to the end to display in a numbered list. add "-t" to display the songs numbered with title + artist'
+        help='list all songs in a given album. add "-n" to display songs in a numbered list, or "-t" to also display song metadata (title & artist)',
+        usage='<album name> [-n or -t]'
     )
     async def list(self, ctx, album_title, arg=None):
         numbered = (arg == '-n')

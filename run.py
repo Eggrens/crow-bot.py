@@ -10,7 +10,7 @@ with open('config.yml', 'r') as f:
     config = yaml.safe_load(f)
 
 starting_activity = discord.CustomActivity(name=f"Type {config['prefix']}help for commands")
-bot = CrowBot(config, activity=starting_activity)
+bot = CrowBot(config, activity=starting_activity, help_command=commands.MinimalHelpCommand())
 
 @bot.event
 async def on_ready():
