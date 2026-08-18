@@ -43,7 +43,7 @@ class CrowClient(discord.VoiceClient):
             self.bot = bot
 
         # add song to the queue if it has songs, else start playing it immediately
-        if self.queue or self.is_playing():
+        if self.queue or self.is_playing() or self.is_paused():
             self.queue.append(song)
         else:
             self.current_song = song
