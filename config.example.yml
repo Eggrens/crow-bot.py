@@ -3,20 +3,25 @@
 token: 'your-bot-token'
 # the prefix to use for crow's commands (e.g. ~ -> ~play)
 prefix: '~'
-# the "owners" of crow, i.e. who can play music and stop the bot
+# the "owners" of crow, i.e. who is allowed to shut down the bot using the 'quit' command
 owners:
   - 123456
+  - 343434
 # the channels crow is allowed to listen to for commands
 channels:
   - 7890
+  - 99999
 # albums: a list of folders with music files. each must have a name and the absolute path to the folder
 albums:
   - name: 'my-album'
     path: '/path/to/your/album'
-# collections: a list of folders which contain folders with music files 
-# every folder inside a collection is treated as an "album" and added to the list of albums
-# useful if you have a big folder of albums that you don't want to list and name individually
+  - name: 'my-other-album'
+    path: '/path/to/other/album'
+# collections: a list of folders of folders with music files 
+# every folder inside a collection is treated as an "album" and added to the list of albums. each album's name is the name of the directory.
+# useful if you have a big folder of albums that you don't want to list and name individually in the 'albums' section
 collections:
-  - '/path/to/a/buncha/folders'
+  - '/path/to/a/buncha/albums'
+  - '/path/to/another/collection'
 # a log file to write output to. set as empty string if you don't want one
 log: 'crow-bot.log'
