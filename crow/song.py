@@ -11,7 +11,7 @@ class Song:
         self.artist = tag.artist
         self.album = tag.album
         self.track = tag.track
-        self.disc = tag.disc
+        self.disc = tag.disc if tag.disc is not None else 0
         self.duration = int(tag.duration)
         self.image = tag.images.any
 
